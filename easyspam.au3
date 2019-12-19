@@ -10,8 +10,8 @@
 #include <WindowsConstants.au3>
 
 
-Global $sContentFolderPath = "content"
-Global $sTitle = "Easy Spam"
+Global $sContentFolderPath = "saves"
+Global $sTitle = "Spamerino"
 Global $hFileDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
 Global $bRunning = False
@@ -133,6 +133,11 @@ EndFunc
 
 
 Func _Save()
+	If WinGetTitle("[ACTIVE]") <> $sTitle Then
+		ControlSend("", "", "", "^s")
+		Return
+	EndIf
+
 	If GUICtrlRead($hList) == "" Then
 		Local $sFileName = InputBox("Name", "Enter a name:", "", "", 250, 150)
 		FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
@@ -144,13 +149,14 @@ Func _Save()
 		FileClose($hOpenFileToSave)
 		$hFileDic.Item(GUICtrlRead ($hList)) = GUICtrlRead($hTextarea)
 	EndIf
-
-	ConsoleWrite(StringToASCIIArray ("☭")[0])
-	ConsoleWrite(Chr(9773))
 EndFunc
 
 
 Func _New()
+	If WinGetTitle("[ACTIVE]") <> $sTitle Then
+		ControlSend("", "", "", "^n")
+		Return
+	EndIf
 	GUICtrlSetData($hTextarea, "")
 	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", "-1")
 EndFunc
