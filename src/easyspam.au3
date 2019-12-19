@@ -10,7 +10,7 @@
 #include <WindowsConstants.au3>
 
 
-Global $sContentFolderPath = "saves"
+Global $sContentFolderPath = "../saves"
 Global $sTitle = "Spamerino"
 Global $hFileDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
@@ -18,13 +18,16 @@ Global $bRunning = False
 Global $aCurrentArray
 Global $iCurrentIndex = 0
 
+Global $nPlayDelay = 1500
+Global $nAutoPlayDelay = 100
+
 HotKeySet("^s", "_Save")
 HotKeySet("^n", "_New")
 
 GUISetBkColor(0x000000);GUISetBkColor(0xF0F0F0)
 $hAutoSpamForm = GUICreate($sTitle, 978, 540, 259, 194)
 $hMenuFile = GUICtrlCreateMenu("File")
-$hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctzurl+N", $hMenuFile)
+$hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctrl+N", $hMenuFile)
 $hMenuFileItemSave = GUICtrlCreateMenuItem("&Save"&@TAB&"Ctrl+S", $hMenuFile)
 
 $hMenuControls = GUICtrlCreateMenu("Controls")
@@ -65,7 +68,7 @@ Func _Play()
 	If WinGetTitle("[ACTIVE]") <> $sTitle and $aCurrentArray <> 0 Then
 		ControlSend("", "", "", "{ENTER}")
 	EndIf
-	sleep(500)
+	sleep($nAutoPlayDelay)
 	If $bRunning = True and $bPaused = False Then
 		$iCurrentIndex += 1
 
@@ -87,7 +90,6 @@ EndFunc
 Func _SetPlaySettings()
 	HotKeySet("{Enter}", "_Play")
 	GUICtrlSetData($hLabelStatus, "Status: Running...")
-	sleep(1500)
 	$bRunning = True
 	$bPaused = False
 	GUICtrlSetState($hButtonPlay, $GUI_DISABLE)
@@ -205,6 +207,7 @@ While 1
 			GUICtrlSetData($hTextarea, $hFileDic.Item(GUICtrlRead ($hList)))
 		Case $hButtonPlay
 			_SetPlaySettings()
+			sleep($nPlayDelay)
 			_Play()
 		Case $hButtonPause
 			_SetPauseSettings()
