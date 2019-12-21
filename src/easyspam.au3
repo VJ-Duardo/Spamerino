@@ -23,19 +23,24 @@ Global $nAutoPlayDelay = 100
 
 HotKeySet("^s", "_Save")
 HotKeySet("^n", "_New")
+HotKeySet("^!p", "_SetPlaySettings")
 
-GUISetBkColor(0x000000);GUISetBkColor(0xF0F0F0)
+GUISetBkColor(0x000000)
 $hAutoSpamForm = GUICreate($sTitle, 978, 540, 259, 194)
 $hMenuFile = GUICtrlCreateMenu("File")
 $hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctrl+N", $hMenuFile)
 $hMenuFileItemSave = GUICtrlCreateMenuItem("&Save"&@TAB&"Ctrl+S", $hMenuFile)
 
 $hMenuControls = GUICtrlCreateMenu("Controls")
-$hMenuControlsPlay = GUICtrlCreateMenuItem("Play", $hMenuControls)
-$hMenuControlsPause = GUICtrlCreateMenuItem("Pause", $hMenuControls)
+$hMenuControlsPlay = GUICtrlCreateMenuItem("Play"&@TAB&"Ctrl+Alt+P", $hMenuControls)
+$hMenuControlsPause = GUICtrlCreateMenuItem("Pause"&@TAB&"Ctrl+Alt+P", $hMenuControls)
 GUICtrlSetState($hMenuControlsPause, $GUI_DISABLE)
-$hMenuControlsCancel = GUICtrlCreateMenuItem("Cancel", $hMenuControls)
+$hMenuControlsCancel = GUICtrlCreateMenuItem("Cancel"&@TAB&"Ctrl+Alt+C", $hMenuControls)
 GUICtrlSetState($hMenuControlsCancel, $GUI_DISABLE)
+$hMenuControlsPrevious = GUICtrlCreateMenuItem("Previous"&@TAB&"Ctrl+Alt+←", $hMenuControls)
+GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+$hMenuControlsNext = GUICtrlCreateMenuItem("Next"&@TAB&"Ctrl+Alt+→", $hMenuControls)
+GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
 
 $hGroupEdit = GUICtrlCreateGroup("Edit", 24, 16, 929, 385)
 $hList = GUICtrlCreateList("", 744, 40, 193, 201, BitOR($GUI_SS_DEFAULT_LIST,$LBS_DISABLENOSCROLL))
@@ -83,12 +88,16 @@ Func _Play()
 
 		ClipPut(GUICtrlRead($hInputBefore) & $aCurrentArray[$iCurrentIndex] & GUICtrlRead($hInputAfter))
 		Send ("^v")
-		_SetSkipStatus()
+		_SetSkipStatus(0)
 	EndIf
 EndFunc
 
 Func _SetPlaySettings()
 	HotKeySet("{Enter}", "_Play")
+	HotKeySet("^!p", "_SetPauseSettings")
+	HotKeySet("^!c", "_SuspendRun")
+	HotKeySet("^!{LEFT}", "_SetSkipStatusFromHotkey")
+	HotKeySet("^!{RIGHT}", "_SetSkipStatusFromHotkey")
 	GUICtrlSetData($hLabelStatus, "Status: Running...")
 	$bRunning = True
 	$bPaused = False
@@ -104,6 +113,7 @@ EndFunc
 
 Func _SetPauseSettings()
 	HotKeySet("{Enter}")
+	HotKeySet("^!p", "_SetPlaySettings")
 	GUICtrlSetData($hLabelStatus, "Status: Paused.")
 	$bPaused = True
 	GUICtrlSetState($hButtonPlay, $GUI_ENABLE)
@@ -117,6 +127,10 @@ EndFunc
 
 Func _SuspendRun()
 	HotKeySet("{Enter}")
+	HotKeySet("^!p", "_SetPlaySettings")
+	HotKeySet("^!c")
+	HotKeySet("^!{LEFT}")
+	HotKeySet("^!{RIGHT}")
 	$bRunning = False
 	$iCurrentIndex = 0
 	$aCurrentArray = 0
@@ -130,6 +144,8 @@ Func _SuspendRun()
 	GUICtrlSetState($hList, $GUI_ENABLE)
 	GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
 	GUICtrlSetState($hButtonNext, $GUI_DISABLE)
+	GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+	GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
 	GUICtrlSetData($hLabelStatus, "Status: Off.")
 EndFunc
 
@@ -182,17 +198,36 @@ Func _LoadList()
 EndFunc
 
 
-Func _SetSkipStatus()
+
+Func _SetSkipStatusFromHotkey()
+	switch @HotKeyPressed
+		Case "^!{LEFT}"
+			_SetSkipStatus(-1)
+		Case "^!{RIGHT}"
+			_SetSkipStatus(1)
+	EndSwitch
+EndFunc
+
+Func _SetSkipStatus($nIndexChange)
+	$iCurrentIndex += $nIndexChange
 	If $iCurrentIndex < (UBound($aCurrentArray) -2) Then
 		GUICtrlSetState($hButtonNext, $GUI_ENABLE)
+		GUICtrlSetState($hMenuControlsNext, $GUI_ENABLE)
+		HotKeySet("^!{RIGHT}", "_SetSkipStatusFromHotkey")
 	Else
 		GUICtrlSetState($hButtonNext, $GUI_DISABLE)
+		GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
+		HotKeySet("^!{RIGHT}")
 	EndIf
 
 	If $iCurrentIndex > 0 Then
 		GUICtrlSetState($hButtonPrevious, $GUI_ENABLE)
+		GUICtrlSetState($hMenuControlsPrevious, $GUI_ENABLE)
+		HotKeySet("^!{LEFT}", "_SetSkipStatusFromHotkey")
 	Else
 		GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
+		GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+		HotKeySet("^!{LEFT}")
 	EndIf
 EndFunc
 
@@ -209,21 +244,31 @@ While 1
 			_SetPlaySettings()
 			sleep($nPlayDelay)
 			_Play()
+		Case $hMenuControlsPlay
+			_SetPlaySettings()
+			sleep($nPlayDelay)
+			_Play()
 		Case $hButtonPause
+			_SetPauseSettings()
+		Case $hMenuControlsPause
 			_SetPauseSettings()
 		Case $hButtonCancel
 			_SuspendRun()
+		Case $hMenuControlsCancel
+			_SuspendRun()
+		Case $hButtonPrevious
+			_SetSkipStatus(-1)
+		Case $hMenuControlsPrevious
+			_SetSkipStatus(-1)
+		Case $hButtonNext
+			_SetSkipStatus(1)
+		Case $hMenuControlsNext
+			_SetSkipStatus(1)
 		Case $hMenuFileItemNew
 			_New()
 		Case $hMenuFileItemSave
 			_Save()
 		Case $hButtonDelete
 			_Delete()
-		Case $hButtonPrevious
-			$iCurrentIndex += -1
-			_SetSkipStatus()
-		Case $hButtonNext
-			$iCurrentIndex += 1
-			_SetSkipStatus()
 	EndSwitch
 WEnd
