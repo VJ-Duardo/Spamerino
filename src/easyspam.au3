@@ -93,6 +93,10 @@ Func _Play()
 EndFunc
 
 Func _SetPlaySettings()
+	If GUICtrlRead($hTextarea) == "" Then
+		_SuspendRun()
+		Return
+	EndIf
 	HotKeySet("{Enter}", "_Play")
 	HotKeySet("^!p", "_SetPauseSettings")
 	HotKeySet("^!c", "_SuspendRun")
@@ -109,6 +113,8 @@ Func _SetPlaySettings()
 	GUICtrlSetState($hMenuControlsCancel, $GUI_ENABLE)
 	GUICtrlSetState($hTextarea, $GUI_DISABLE)
 	GUICtrlSetState($hList, $GUI_DISABLE)
+	sleep($nPlayDelay)
+	_Play()
 EndFunc
 
 Func _SetPauseSettings()
@@ -242,12 +248,8 @@ While 1
 			GUICtrlSetData($hTextarea, $hFileDic.Item(GUICtrlRead ($hList)))
 		Case $hButtonPlay
 			_SetPlaySettings()
-			sleep($nPlayDelay)
-			_Play()
 		Case $hMenuControlsPlay
 			_SetPlaySettings()
-			sleep($nPlayDelay)
-			_Play()
 		Case $hButtonPause
 			_SetPauseSettings()
 		Case $hMenuControlsPause
