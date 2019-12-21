@@ -10,30 +10,40 @@
 #include <WindowsConstants.au3>
 
 
-Global $sContentFolderPath = "content"
-Global $sTitle = "Easy Spam"
+Global $sContentFolderPath = "../saves"
+Global $sTitle = "Spamerino"
 Global $hFileDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
 Global $bRunning = False
 Global $aCurrentArray
 Global $iCurrentIndex = 0
 
+Global $nPlayDelay = 1500
+Global $nAutoPlayDelay = 100
+
 HotKeySet("^s", "_Save")
 HotKeySet("^n", "_New")
+HotKeySet("^!p", "_SetPlaySettings")
 
-GUISetBkColor(0x000000);GUISetBkColor(0xF0F0F0)
-$hAutoSpamForm = GUICreate($sTitle, 978, 540, 259, 194)
+GUISetBkColor(0x000000)
+$hAutoSpamForm = GUICreate($sTitle, 978, 672, 259, 194)
+;Menu bar
 $hMenuFile = GUICtrlCreateMenu("File")
-$hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctzurl+N", $hMenuFile)
+$hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctrl+N", $hMenuFile)
 $hMenuFileItemSave = GUICtrlCreateMenuItem("&Save"&@TAB&"Ctrl+S", $hMenuFile)
 
 $hMenuControls = GUICtrlCreateMenu("Controls")
-$hMenuControlsPlay = GUICtrlCreateMenuItem("Play", $hMenuControls)
-$hMenuControlsPause = GUICtrlCreateMenuItem("Pause", $hMenuControls)
+$hMenuControlsPlay = GUICtrlCreateMenuItem("Play"&@TAB&"Ctrl+Alt+P", $hMenuControls)
+$hMenuControlsPause = GUICtrlCreateMenuItem("Pause"&@TAB&"Ctrl+Alt+P", $hMenuControls)
 GUICtrlSetState($hMenuControlsPause, $GUI_DISABLE)
-$hMenuControlsCancel = GUICtrlCreateMenuItem("Cancel", $hMenuControls)
+$hMenuControlsCancel = GUICtrlCreateMenuItem("Cancel"&@TAB&"Ctrl+Alt+C", $hMenuControls)
 GUICtrlSetState($hMenuControlsCancel, $GUI_DISABLE)
+$hMenuControlsPrevious = GUICtrlCreateMenuItem("Previous"&@TAB&"Ctrl+Alt+←", $hMenuControls)
+GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+$hMenuControlsNext = GUICtrlCreateMenuItem("Next"&@TAB&"Ctrl+Alt+→", $hMenuControls)
+GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
 
+;Edit group
 $hGroupEdit = GUICtrlCreateGroup("Edit", 24, 16, 929, 385)
 $hList = GUICtrlCreateList("", 744, 40, 193, 201, BitOR($GUI_SS_DEFAULT_LIST,$LBS_DISABLENOSCROLL))
 $hButtonDelete  = GUICtrlCreateButton("Delete", 864, 248, 75, 25)
@@ -43,21 +53,36 @@ $hInputBefore = GUICtrlCreateInput("", 744, 296, 193, 21)
 $hLabelAfter = GUICtrlCreateLabel("After each line:", 744, 336, 75, 17)
 $hInputAfter = GUICtrlCreateInput("", 744, 360, 193, 21)
 
-$hGroupControls = GUICtrlCreateGroup("Controls", 24, 416, 929, 81)
-$hButtonPlay = GUICtrlCreateButton("►", 40, 448, 75, 25)
+;Status group
+$hGroupStatus = GUICtrlCreateGroup("Status", 24, 416, 929, 121)
+$hLabelCurrLine = GUICtrlCreateLabel("Current line: ", 40, 480, 80, 20)
+GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+$hLabelNextLine = GUICtrlCreateLabel("Next line: ", 40, 504, 65, 20)
+GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+$hLabelNextLineText = GUICtrlCreateLabel("-", 128, 504, 808, 20)
+GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+$hLabelCurrLineText = GUICtrlCreateLabel("-", 128, 480, 808, 20)
+GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
+$hLabelLiveDot = GUICtrlCreateLabel("•", 56, 432, 13, 36)
+GUICtrlSetFont(-1, 20, 400, 0, "Arial")
+GUICtrlSetColor(-1, 0x000000)
+$hLabelState = GUICtrlCreateLabel("State: Off.", 81, 441, 230, 24)
+GUICtrlSetFont(-1, 12, 400, 0, "MS Sans Serif")
+
+;Control group
+$hGroupControls = GUICtrlCreateGroup("Controls", 24, 552, 929, 81)
+$hButtonPlay = GUICtrlCreateButton("►", 40, 584, 75, 25)
 GUICtrlSetFont(-1, 11)
-$hButtonPause = GUICtrlCreateButton("▌ ▌", 144, 448, 75, 25)
+$hButtonPause = GUICtrlCreateButton("▌ ▌", 144, 584, 75, 25)
 GUICtrlSetState($hButtonPause, $GUI_DISABLE)
-$hButtonCancel = GUICtrlCreateButton("█", 248, 448, 75, 25)
+$hButtonCancel = GUICtrlCreateButton("█", 248, 584, 75, 25)
 GUICtrlSetState($hButtonCancel, $GUI_DISABLE)
-$hButtonPrevious = GUICtrlCreateButton("←", 352, 448, 75, 25)
+$hButtonPrevious = GUICtrlCreateButton("←", 352, 584, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
-$hButtonNext = GUICtrlCreateButton("→", 456, 448, 75, 25)
+$hButtonNext = GUICtrlCreateButton("→", 456, 584, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonNext, $GUI_DISABLE)
-$hLabelStatus = GUICtrlCreateLabel("Status: Off.", 568, 451, 229, 24)
-GUICtrlSetFont(-1, 12, 400, 0, "MS Sans Serif")
 GUISetState(@SW_SHOW)
 
 
@@ -65,7 +90,7 @@ Func _Play()
 	If WinGetTitle("[ACTIVE]") <> $sTitle and $aCurrentArray <> 0 Then
 		ControlSend("", "", "", "{ENTER}")
 	EndIf
-	sleep(500)
+	sleep($nAutoPlayDelay)
 	If $bRunning = True and $bPaused = False Then
 		$iCurrentIndex += 1
 
@@ -80,14 +105,24 @@ Func _Play()
 
 		ClipPut(GUICtrlRead($hInputBefore) & $aCurrentArray[$iCurrentIndex] & GUICtrlRead($hInputAfter))
 		Send ("^v")
-		_SetSkipStatus()
+		_SetLineStatus(True)
+		_SetSkipStatus(0)
 	EndIf
 EndFunc
 
+
 Func _SetPlaySettings()
+	If GUICtrlRead($hTextarea) == "" Then
+		_SuspendRun()
+		Return
+	EndIf
 	HotKeySet("{Enter}", "_Play")
-	GUICtrlSetData($hLabelStatus, "Status: Running...")
-	sleep(1500)
+	HotKeySet("^!p", "_SetPauseSettings")
+	HotKeySet("^!c", "_SuspendRun")
+	HotKeySet("^!{LEFT}", "_SetSkipStatusFromHotkey")
+	HotKeySet("^!{RIGHT}", "_SetSkipStatusFromHotkey")
+	GUICtrlSetData($hLabelState, "State: Running...")
+	GUICtrlSetColor($hLabelLiveDot, 0x00FF00)
 	$bRunning = True
 	$bPaused = False
 	GUICtrlSetState($hButtonPlay, $GUI_DISABLE)
@@ -98,11 +133,15 @@ Func _SetPlaySettings()
 	GUICtrlSetState($hMenuControlsCancel, $GUI_ENABLE)
 	GUICtrlSetState($hTextarea, $GUI_DISABLE)
 	GUICtrlSetState($hList, $GUI_DISABLE)
+	sleep($nPlayDelay)
+	_Play()
 EndFunc
 
 Func _SetPauseSettings()
 	HotKeySet("{Enter}")
-	GUICtrlSetData($hLabelStatus, "Status: Paused.")
+	HotKeySet("^!p", "_SetPlaySettings")
+	GUICtrlSetData($hLabelState, "State: Paused.")
+	GUICtrlSetColor($hLabelLiveDot, 0xFF0000)
 	$bPaused = True
 	GUICtrlSetState($hButtonPlay, $GUI_ENABLE)
 	GUICtrlSetState($hMenuControlsPlay, $GUI_ENABLE)
@@ -112,9 +151,16 @@ Func _SetPauseSettings()
 	GUICtrlSetState($hList, $GUI_ENABLE)
 EndFunc
 
-
 Func _SuspendRun()
 	HotKeySet("{Enter}")
+	HotKeySet("^!p", "_SetPlaySettings")
+	HotKeySet("^!c")
+	HotKeySet("^!{LEFT}")
+	HotKeySet("^!{RIGHT}")
+	GUICtrlSetData($hLabelState, "State: Off.")
+	GUICtrlSetData($hLabelCurrLineText, "-")
+	GUICtrlSetData($hLabelNextLineText, "-")
+	GUICtrlSetColor($hLabelLiveDot, 0x000000)
 	$bRunning = False
 	$iCurrentIndex = 0
 	$aCurrentArray = 0
@@ -128,11 +174,17 @@ Func _SuspendRun()
 	GUICtrlSetState($hList, $GUI_ENABLE)
 	GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
 	GUICtrlSetState($hButtonNext, $GUI_DISABLE)
-	GUICtrlSetData($hLabelStatus, "Status: Off.")
+	GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+	GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
 EndFunc
 
 
 Func _Save()
+	If WinGetTitle("[ACTIVE]") <> $sTitle Then
+		ControlSend("", "", "", "^s")
+		Return
+	EndIf
+
 	If GUICtrlRead($hList) == "" Then
 		Local $sFileName = InputBox("Name", "Enter a name:", "", "", 250, 150)
 		FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
@@ -144,13 +196,14 @@ Func _Save()
 		FileClose($hOpenFileToSave)
 		$hFileDic.Item(GUICtrlRead ($hList)) = GUICtrlRead($hTextarea)
 	EndIf
-
-	ConsoleWrite(StringToASCIIArray ("☭")[0])
-	ConsoleWrite(Chr(9773))
 EndFunc
 
 
 Func _New()
+	If WinGetTitle("[ACTIVE]") <> $sTitle Then
+		ControlSend("", "", "", "^n")
+		Return
+	EndIf
 	GUICtrlSetData($hTextarea, "")
 	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", "-1")
 EndFunc
@@ -174,18 +227,49 @@ Func _LoadList()
 EndFunc
 
 
-Func _SetSkipStatus()
+Func _SetLineStatus($bChangeCurrent)
+	If $bChangeCurrent Then
+		GUICtrlSetData($hLabelCurrLineText, $aCurrentArray[$iCurrentIndex])
+	EndIf
+
+	If $iCurrentIndex < (UBound($aCurrentArray))-1 Then
+		GUICtrlSetData($hLabelNextLineText, $aCurrentArray[$iCurrentIndex+1])
+	Else
+		GUICtrlSetData($hLabelNextLineText, "-")
+	EndIf
+EndFunc
+
+Func _SetSkipStatusFromHotkey()
+	switch @HotKeyPressed
+		Case "^!{LEFT}"
+			_SetSkipStatus(-1)
+		Case "^!{RIGHT}"
+			_SetSkipStatus(1)
+	EndSwitch
+EndFunc
+
+Func _SetSkipStatus($nIndexChange)
+	$iCurrentIndex += $nIndexChange
 	If $iCurrentIndex < (UBound($aCurrentArray) -2) Then
 		GUICtrlSetState($hButtonNext, $GUI_ENABLE)
+		GUICtrlSetState($hMenuControlsNext, $GUI_ENABLE)
+		HotKeySet("^!{RIGHT}", "_SetSkipStatusFromHotkey")
 	Else
 		GUICtrlSetState($hButtonNext, $GUI_DISABLE)
+		GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
+		HotKeySet("^!{RIGHT}")
 	EndIf
 
 	If $iCurrentIndex > 0 Then
 		GUICtrlSetState($hButtonPrevious, $GUI_ENABLE)
+		GUICtrlSetState($hMenuControlsPrevious, $GUI_ENABLE)
+		HotKeySet("^!{LEFT}", "_SetSkipStatusFromHotkey")
 	Else
 		GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
+		GUICtrlSetState($hMenuControlsPrevious, $GUI_DISABLE)
+		HotKeySet("^!{LEFT}")
 	EndIf
+	_SetLineStatus(False)
 EndFunc
 
 _LoadList()
@@ -199,22 +283,29 @@ While 1
 			GUICtrlSetData($hTextarea, $hFileDic.Item(GUICtrlRead ($hList)))
 		Case $hButtonPlay
 			_SetPlaySettings()
-			_Play()
+		Case $hMenuControlsPlay
+			_SetPlaySettings()
 		Case $hButtonPause
+			_SetPauseSettings()
+		Case $hMenuControlsPause
 			_SetPauseSettings()
 		Case $hButtonCancel
 			_SuspendRun()
+		Case $hMenuControlsCancel
+			_SuspendRun()
+		Case $hButtonPrevious
+			_SetSkipStatus(-1)
+		Case $hMenuControlsPrevious
+			_SetSkipStatus(-1)
+		Case $hButtonNext
+			_SetSkipStatus(1)
+		Case $hMenuControlsNext
+			_SetSkipStatus(1)
 		Case $hMenuFileItemNew
 			_New()
 		Case $hMenuFileItemSave
 			_Save()
 		Case $hButtonDelete
 			_Delete()
-		Case $hButtonPrevious
-			$iCurrentIndex += -1
-			_SetSkipStatus()
-		Case $hButtonNext
-			$iCurrentIndex += 1
-			_SetSkipStatus()
 	EndSwitch
 WEnd
