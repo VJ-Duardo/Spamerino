@@ -9,6 +9,8 @@
 #include <GUIListBox.au3>
 #include <WindowsConstants.au3>
 
+#include "content_obj.au3"
+
 
 Global $sContentFolderPath = "../saves"
 Global $sTitle = "Spamerino"
@@ -224,6 +226,9 @@ Func _LoadList()
 		$hFileDic.Add($aFileArray[$i], FileRead($sContentFolderPath & "\" & $aFileArray[$i]))
 		GUICtrlSetData($hList, $aFileArray[$i])
 	Next
+
+	;$hContentSaveTest = ContentSave("Test", "123123123", "", "")
+	;ConsoleWrite(_GetContent($hContentSaveTest))
 EndFunc
 
 
