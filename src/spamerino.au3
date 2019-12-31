@@ -189,6 +189,9 @@ Func _Save()
 
 	If GUICtrlRead($hList) == "" Then
 		Local $sFileName = InputBox("Name", "Enter a name:", "", "", 250, 150)
+		If $sFileName == "" Then
+			Return
+		EndIf
 		FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
 		$hFileDic.Add($sFileName, GUICtrlRead($hTextarea))
 		GUICtrlSetData($hList, $sFileName)
