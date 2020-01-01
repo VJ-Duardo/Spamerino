@@ -12,7 +12,6 @@
 #include "content_obj.au3"
 
 
-Global $sContentFolderPath = "../saves"
 Global $sTitle = "Spamerino"
 Global $hFileDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
@@ -86,6 +85,13 @@ $hButtonNext = GUICtrlCreateButton("→", 456, 584, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonNext, $GUI_DISABLE)
 GUISetState(@SW_SHOW)
+
+
+If $CmdLine[0] < 4 or Mod($CmdLine,4) <> 0 Then
+	Exit
+Else
+	_LoadList()
+EndIf
 
 
 Func _Play()
@@ -224,14 +230,11 @@ EndFunc
 
 
 Func _LoadList()
-	Local $aFileArray = _FileListToArray($sContentFolderPath)
-	for $i = 1 to UBound($aFileArray) -1
-		$hFileDic.Add($aFileArray[$i], FileRead($sContentFolderPath & "\" & $aFileArray[$i]))
-		GUICtrlSetData($hList, $aFileArray[$i])
+	For $i = 1 To $CmdLine[0] Step 4
+		$hNewContentSaveObj = ContentSave($CmdLine[$i], StringReplace($CmdLine[$i+1], @LF, @CRLF), $CmdLine[$i+2], $CmdLine[$i+3])
+		$hFileDic.Add($CmdLine[$i], $hNewContentSaveObj)
+		GUICtrlSetData($hList, $CmdLine[$i])
 	Next
-
-	;$hContentSaveTest = ContentSave("Test", "123123123", "", "")
-	;ConsoleWrite(_GetContent($hContentSaveTest))
 EndFunc
 
 
@@ -280,7 +283,6 @@ Func _SetSkipStatus($nIndexChange)
 	_SetLineStatus(False)
 EndFunc
 
-_LoadList()
 
 While 1
 	$nMsg = GUIGetMsg()
@@ -288,7 +290,12 @@ While 1
 		Case $GUI_EVENT_CLOSE
 			Exit
 		Case $hList
-			GUICtrlSetData($hTextarea, $hFileDic.Item(GUICtrlRead ($hList)))
+			If GUICtrlRead ($hList) <> "" Then
+				$hCSObj = $hFileDic.Item(GUICtrlRead ($hList))
+				GUICtrlSetData($hTextarea, _GetContent($hCSObj))
+				GUICtrlSetData($hInputBefore, _GetBefore($hCSObj))
+				GUICtrlSetData($hInputAfter, _GetAfter($hCSObj))
+			EndIf
 		Case $hButtonPlay
 			_SetPlaySettings()
 		Case $hMenuControlsPlay
