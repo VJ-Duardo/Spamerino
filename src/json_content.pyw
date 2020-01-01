@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 def return_json_obj():
-    with open('saves/content.json', 'r', encoding='utf-8') as file:
+    with open('../saves/content.json', 'r', encoding='utf-8') as file:
         return json.loads(file.read())
 
 def read():

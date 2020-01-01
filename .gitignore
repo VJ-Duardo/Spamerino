@@ -1,3 +1,5 @@
 *.zip
 *.exe
 README.txt
+/Spamerino
+src/__pycache__

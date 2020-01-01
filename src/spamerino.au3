@@ -198,13 +198,13 @@ Func _Save()
 		If $sFileName == "" Then
 			Return
 		EndIf
-		FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
+		;FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
 		$hFileDic.Add($sFileName, GUICtrlRead($hTextarea))
 		GUICtrlSetData($hList, $sFileName)
 	Else
-		$hOpenFileToSave = FileOpen($sContentFolderPath & "\" & GUICtrlRead($hList), 2)
-		FileWrite($hOpenFileToSave, GUICtrlRead($hTextarea))
-		FileClose($hOpenFileToSave)
+		;$hOpenFileToSave = FileOpen($sContentFolderPath & "\" & GUICtrlRead($hList), 2)
+		;FileWrite($hOpenFileToSave, GUICtrlRead($hTextarea))
+		;FileClose($hOpenFileToSave)
 		$hFileDic.Item(GUICtrlRead ($hList)) = GUICtrlRead($hTextarea)
 	EndIf
 EndFunc
@@ -224,7 +224,7 @@ Func _Delete()
 	If GUICtrlRead($hList) == "" Then
 		Return
 	EndIf
-	FileDelete($sContentFolderPath & "\" & GUICtrlRead($hList))
+	;FileDelete($sContentFolderPath & "\" & GUICtrlRead($hList))
 	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
 EndFunc
 
