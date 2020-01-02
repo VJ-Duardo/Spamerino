@@ -1,6 +1,7 @@
 #include <FileConstants.au3>
 #include <File.au3>
 #include <WinAPIFiles.au3>
+#include <WinAPIShPath.au3>
 #include <Misc.au3>
 
 #include <ButtonConstants.au3>
@@ -84,13 +85,14 @@ GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
 $hButtonNext = GUICtrlCreateButton("→", 456, 584, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonNext, $GUI_DISABLE)
-GUISetState(@SW_SHOW)
+GUISetState(@SW_HIDE)
 
 
-If $CmdLine[0] < 4 or Mod($CmdLine,4) <> 0 Then
+If $CmdLine[0] < 1 or Mod($CmdLine[0]-1,4) <> 0 or $CmdLine[1] <> "data" Then
 	Exit
 Else
-	_LoadList()
+	GUISetState(@SW_SHOW)
+	_LoadList(_WinAPI_CommandLineToArgv($CmdLineRaw))
 EndIf
 
 
@@ -198,14 +200,16 @@ Func _Save()
 		If $sFileName == "" Then
 			Return
 		EndIf
-		;FileWrite($sContentFolderPath & "\" & $sFileName, GUICtrlRead($hTextarea))
 		$hFileDic.Add($sFileName, GUICtrlRead($hTextarea))
 		GUICtrlSetData($hList, $sFileName)
 	Else
-		;$hOpenFileToSave = FileOpen($sContentFolderPath & "\" & GUICtrlRead($hList), 2)
-		;FileWrite($hOpenFileToSave, GUICtrlRead($hTextarea))
-		;FileClose($hOpenFileToSave)
-		$hFileDic.Item(GUICtrlRead ($hList)) = GUICtrlRead($hTextarea)
+		$hCSObj = $hFileDic.Item(GUICtrlRead ($hList))
+		_SetContent($hCSObj, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF))
+		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
+		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
+		$hFileDic.Item(GUICtrlRead ($hList)) = $hCSObj
+		$sRun = 'json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
+		Run($sRun)
 	EndIf
 EndFunc
 
@@ -229,11 +233,11 @@ Func _Delete()
 EndFunc
 
 
-Func _LoadList()
-	For $i = 1 To $CmdLine[0] Step 4
-		$hNewContentSaveObj = ContentSave($CmdLine[$i], StringReplace($CmdLine[$i+1], @LF, @CRLF), $CmdLine[$i+2], $CmdLine[$i+3])
-		$hFileDic.Add($CmdLine[$i], $hNewContentSaveObj)
-		GUICtrlSetData($hList, $CmdLine[$i])
+Func _LoadList($aCmdLine)
+	For $i = 2 To $aCmdLine[0] Step 4
+		$hNewContentSaveObj = ContentSave($aCmdLine[$i], StringReplace($aCmdLine[$i+1], @LF, @CRLF), $aCmdLine[$i+2], $aCmdLine[$i+3])
+		$hFileDic.Add($aCmdLine[$i], $hNewContentSaveObj)
+		GUICtrlSetData($hList, $aCmdLine[$i])
 	Next
 EndFunc
 
