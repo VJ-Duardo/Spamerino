@@ -216,11 +216,10 @@ Func _Save()
 		WEnd
 		$hNewCSObj = ContentSave($sNewEntryName, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
 		$sRun = 'json_content.exe new "' & _GetName($hNewCSObj) & '" "' & _GetContent($hNewCSObj) & '" "' & _GetBefore($hNewCSObj) & '" "' & _GetAfter($hNewCSObj) & '"'
-		$iPID = Run($sRun, "", @SW_HIDE, 2)
-		ProcessWaitClose($iPID)
-		If StdoutRead($iPID) == "Success" Then
+		If _CallJson($sRun) Then
 			$hCSObjDic.Add($sNewEntryName, $hNewCSObj)
 			GUICtrlSetData($hList, $sNewEntryName)
+			;ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", $sNewEntryName)
 		EndIf
 	Else
 		$hCSObj = $hCSObjDic.Item(GUICtrlRead ($hList))
@@ -228,9 +227,7 @@ Func _Save()
 		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
 		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
 		$sRun = 'json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
-		$iPID = Run($sRun, "", @SW_HIDE, 2)
-		ProcessWaitClose($iPID)
-		If StdoutRead($iPID) == "Success" Then
+		If _CallJson($sRun) Then
 			$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
 		EndIf
 	EndIf
@@ -251,8 +248,22 @@ Func _Delete()
 	If GUICtrlRead($hList) == "" Then
 		Return
 	EndIf
-	;FileDelete($sContentFolderPath & "\" & GUICtrlRead($hList))
-	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
+
+	$sRun = 'json_content.exe delete "' & GUICtrlRead($hList) & '"'
+	If _CallJson($sRun) Then
+			$hCSObjDic.Remove(GUICtrlRead($hList))
+			ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
+			GUICtrlSetData($hTextarea, "")
+	EndIf
+EndFunc
+
+
+Func _CallJson($sRunString)
+	$iPID = Run($sRunString, "", @SW_HIDE, 2)
+	ProcessWaitClose($iPID)
+	If StdoutRead($iPID) == "Success" Then
+		Return True
+	EndIf
 EndFunc
 
 

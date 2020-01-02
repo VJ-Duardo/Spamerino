@@ -34,6 +34,7 @@ def save(name, content, before, after):
             print("Success", end="")
             return
 
+
 def new_save(name, content, before, after):
     json_obj = return_json_obj()
     new_entry = {"name": name,
@@ -45,6 +46,16 @@ def new_save(name, content, before, after):
     print("Success", end="")
 
 
+def delete(name):
+    json_obj = return_json_obj()
+    for i in range(0, len(json_obj['saves']), 1):
+        if json_obj['saves'][i]['name'] == name:
+            del json_obj['saves'][i]
+            write_json_obj(json_obj)
+            print("Success", end="")
+            return
+
+
 
 if sys.argv[1] == 'read':
     read()
@@ -52,5 +63,7 @@ elif sys.argv[1] == 'save':
     save(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
 elif sys.argv[1] == 'new':
     new_save(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+elif sys.argv[1] == 'delete':
+    delete(sys.argv[2])
 else:
     pass
