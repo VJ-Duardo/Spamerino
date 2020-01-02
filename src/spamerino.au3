@@ -14,7 +14,7 @@
 
 
 Global $sTitle = "Spamerino"
-Global $hFileDic = ObjCreate("Scripting.Dictionary")
+Global $hCSObjDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
 Global $bRunning = False
 Global $aCurrentArray
@@ -196,20 +196,43 @@ Func _Save()
 	EndIf
 
 	If GUICtrlRead($hList) == "" Then
-		Local $sFileName = InputBox("Name", "Enter a name:", "", "", 250, 150)
-		If $sFileName == "" Then
-			Return
+		$bNameCorrect = False
+		$sPrompt = "Enter a name:"
+		While Not $bNameCorrect
+			Local $sNewEntryName = InputBox("Name", $sPrompt, "", "", 250, 150)
+			If @error == 1 Then
+				Return
+			EndIf
+
+			If $sNewEntryName == "" or $hCSObjDic.Exists($sNewEntryName) Then
+				If $sNewEntryName == "" Then
+					$sPrompt = "The name cant be empty." & @CRLF & "Enter a name:"
+				Else
+					$sPrompt = "This name already exists." & @CRLF & "Enter a name:"
+				EndIf
+			Else
+				$bNameCorrect = True
+			EndIf
+		WEnd
+		$hNewCSObj = ContentSave($sNewEntryName, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
+		$sRun = 'json_content.exe new "' & _GetName($hNewCSObj) & '" "' & _GetContent($hNewCSObj) & '" "' & _GetBefore($hNewCSObj) & '" "' & _GetAfter($hNewCSObj) & '"'
+		$iPID = Run($sRun, "", @SW_HIDE, 2)
+		ProcessWaitClose($iPID)
+		If StdoutRead($iPID) == "Success" Then
+			$hCSObjDic.Add($sNewEntryName, $hNewCSObj)
+			GUICtrlSetData($hList, $sNewEntryName)
 		EndIf
-		$hFileDic.Add($sFileName, GUICtrlRead($hTextarea))
-		GUICtrlSetData($hList, $sFileName)
 	Else
-		$hCSObj = $hFileDic.Item(GUICtrlRead ($hList))
+		$hCSObj = $hCSObjDic.Item(GUICtrlRead ($hList))
 		_SetContent($hCSObj, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF))
 		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
 		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
-		$hFileDic.Item(GUICtrlRead ($hList)) = $hCSObj
 		$sRun = 'json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
-		Run($sRun)
+		$iPID = Run($sRun, "", @SW_HIDE, 2)
+		ProcessWaitClose($iPID)
+		If StdoutRead($iPID) == "Success" Then
+			$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
+		EndIf
 	EndIf
 EndFunc
 
@@ -236,7 +259,7 @@ EndFunc
 Func _LoadList($aCmdLine)
 	For $i = 2 To $aCmdLine[0] Step 4
 		$hNewContentSaveObj = ContentSave($aCmdLine[$i], StringReplace($aCmdLine[$i+1], @LF, @CRLF), $aCmdLine[$i+2], $aCmdLine[$i+3])
-		$hFileDic.Add($aCmdLine[$i], $hNewContentSaveObj)
+		$hCSObjDic.Add($aCmdLine[$i], $hNewContentSaveObj)
 		GUICtrlSetData($hList, $aCmdLine[$i])
 	Next
 EndFunc
@@ -295,7 +318,7 @@ While 1
 			Exit
 		Case $hList
 			If GUICtrlRead ($hList) <> "" Then
-				$hCSObj = $hFileDic.Item(GUICtrlRead ($hList))
+				$hCSObj = $hCSObjDic.Item(GUICtrlRead ($hList))
 				GUICtrlSetData($hTextarea, _GetContent($hCSObj))
 				GUICtrlSetData($hInputBefore, _GetBefore($hCSObj))
 				GUICtrlSetData($hInputAfter, _GetAfter($hCSObj))
