@@ -85,15 +85,19 @@ GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
 $hButtonNext = GUICtrlCreateButton("→", 456, 584, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonNext, $GUI_DISABLE)
-GUISetState(@SW_HIDE)
+GUISetState(@SW_SHOW)
 
 
-If $CmdLine[0] < 1 or Mod($CmdLine[0]-1,4) <> 0 or $CmdLine[1] <> "data" Then
-	Exit
-Else
-	GUISetState(@SW_SHOW)
-	_LoadList(_WinAPI_CommandLineToArgv($CmdLineRaw))
+
+;Start of the Program
+
+$iStartPID = Run("utils/json_content.exe read", "", @SW_HIDE, 2)
+ProcessWaitClose($iStartPID)
+$aJsonData = StringSplit(StdoutRead($iStartPID), " , ", $STR_ENTIRESPLIT)
+If UBound($aJsonData) <> 0 and Mod($aJsonData[0], 4) == 0 Then
+	_LoadList($aJsonData)
 EndIf
+
 
 
 Func _Play()
@@ -214,19 +218,19 @@ Func _Save()
 				$bNameCorrect = True
 			EndIf
 		WEnd
-		$hNewCSObj = ContentSave($sNewEntryName, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
-		$sRun = 'json_content.exe new "' & _GetName($hNewCSObj) & '" "' & _GetContent($hNewCSObj) & '" "' & _GetBefore($hNewCSObj) & '" "' & _GetAfter($hNewCSObj) & '"'
+		$hNewCSObj = ContentSave($sNewEntryName, GUICtrlRead($hTextarea), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
+		$sRun = 'utils/json_content.exe new "' & _GetName($hNewCSObj) & '" "' & _GetContent($hNewCSObj) & '" "' & _GetBefore($hNewCSObj) & '" "' & _GetAfter($hNewCSObj) & '"'
 		If _CallJson($sRun) Then
 			$hCSObjDic.Add($sNewEntryName, $hNewCSObj)
 			GUICtrlSetData($hList, $sNewEntryName)
-			;ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", $sNewEntryName)
+			ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SelectString", $sNewEntryName)
 		EndIf
 	Else
 		$hCSObj = $hCSObjDic.Item(GUICtrlRead ($hList))
-		_SetContent($hCSObj, StringReplace(GUICtrlRead($hTextarea), @CRLF, @LF))
+		_SetContent($hCSObj, GUICtrlRead($hTextarea))
 		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
 		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
-		$sRun = 'json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
+		$sRun = 'utils/json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
 		If _CallJson($sRun) Then
 			$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
 		EndIf
@@ -240,6 +244,8 @@ Func _New()
 		Return
 	EndIf
 	GUICtrlSetData($hTextarea, "")
+	GUICtrlSetData($hInputBefore, "")
+	GUICtrlSetData($hInputAfter, "")
 	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", "-1")
 EndFunc
 
@@ -249,11 +255,11 @@ Func _Delete()
 		Return
 	EndIf
 
-	$sRun = 'json_content.exe delete "' & GUICtrlRead($hList) & '"'
+	$sRun = 'utils/json_content.exe delete "' & GUICtrlRead($hList) & '"'
 	If _CallJson($sRun) Then
-			$hCSObjDic.Remove(GUICtrlRead($hList))
-			ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
-			GUICtrlSetData($hTextarea, "")
+		$hCSObjDic.Remove(GUICtrlRead($hList))
+		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
+		GUICtrlSetData($hTextarea, "")
 	EndIf
 EndFunc
 
@@ -267,11 +273,14 @@ Func _CallJson($sRunString)
 EndFunc
 
 
-Func _LoadList($aCmdLine)
-	For $i = 2 To $aCmdLine[0] Step 4
-		$hNewContentSaveObj = ContentSave($aCmdLine[$i], StringReplace($aCmdLine[$i+1], @LF, @CRLF), $aCmdLine[$i+2], $aCmdLine[$i+3])
-		$hCSObjDic.Add($aCmdLine[$i], $hNewContentSaveObj)
-		GUICtrlSetData($hList, $aCmdLine[$i])
+Func _LoadList($aJsonData)
+	For $i = 1 To $aJsonData[0] Step 4
+		For $j=0 To 4-1 Step 1
+			$aJsonData[$i+$j] = StringReplace(BinaryToString(StringToBinary($aJsonData[$i+$j]), 4), "/,", ",")
+		Next
+		$hNewContentSaveObj = ContentSave($aJsonData[$i], $aJsonData[$i+1], $aJsonData[$i+2], $aJsonData[$i+3])
+		$hCSObjDic.Add($aJsonData[$i], $hNewContentSaveObj)
+		GUICtrlSetData($hList, $aJsonData[$i])
 	Next
 EndFunc
 

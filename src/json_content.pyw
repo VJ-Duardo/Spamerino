@@ -2,7 +2,6 @@ import json
 import subprocess
 import sys
 
-
 def return_json_obj():
     with open('saves/content.json', 'r', encoding='utf-8') as file:
         return json.loads(file.read())
@@ -15,12 +14,13 @@ def write_json_obj(json_obj):
 
 def read():
     json_obj = return_json_obj()
-    send_list = ['spamerino.exe', 'data']
+    delimiter = " , "
     for i in range(0, len(json_obj['saves']), 1):
         list_elem = json_obj['saves'][i]
-        send_list.extend((list_elem['name'], list_elem['content'], list_elem['before'], list_elem['after']))
-
-    subprocess.call(send_list)
+        for attr in list_elem:
+            if i == len(json_obj['saves'])-1 and attr == "after":
+                delimiter = ""
+            sys.stdout.buffer.write((list_elem[attr].replace(",", "/,") + delimiter).encode('utf-8'))
 
 
 def save(name, content, before, after):
@@ -54,7 +54,6 @@ def delete(name):
             write_json_obj(json_obj)
             print("Success", end="")
             return
-
 
 
 if sys.argv[1] == 'read':

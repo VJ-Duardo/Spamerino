@@ -6,8 +6,7 @@ mkdir %dir_name%/utils
 )
 
 xcopy "saves" "%dir_name%/saves" /E /I /Y
-"D:\Programme\AutoIt3\Aut2Exe\Aut2Exe.exe" /in "src\spamerino.au3" /out "%dir_name%\utils\spamerino.exe"
-"D:\Programme\AutoIt3\Aut2Exe\Aut2Exe.exe" /in "src\start.au3" /out "%dir_name%\start.exe"
+"D:\Programme\AutoIt3\Aut2Exe\Aut2Exe.exe" /in "src\spamerino.au3" /out "%dir_name%\spamerino.exe"
 
 if "%~1"=="python" (
 pyinstaller --onefile -w src/json_content.pyw
