@@ -230,10 +230,18 @@ Func _Save()
 		_SetContent($hCSObj, GUICtrlRead($hTextarea))
 		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
 		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
-		$sRun = 'utils/json_content.exe save "' & _GetName($hCSObj) & '" "' & _GetContent($hCSObj) & '" "' & _GetBefore($hCSObj) & '" "' & _GetAfter($hCSObj) & '"'
-		If _CallJson($sRun) Then
-			$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
-		EndIf
+		$iPid = Run("utils/json_content.exe save", "", @SW_HIDE, 3)
+		StdinWrite($iPid, StringToBinary(_GetName($hCSObj), 4))
+		StdinWrite($iPid, StringToBinary(_GetContent($hCSObj), 4))
+		;StdinWrite($iPid, _GetBefore($hCSObj))
+		;StdinWrite($iPid, _GetAfter($hCSObj))
+		;StdinWrite($iPid)
+		ProcessWaitClose($iStartPID)
+		ConsoleWrite(StdoutRead($iPid))
+		;$sRun = "utils/json_content.exe save"
+		;If _CallJson($sRun) Then
+		;	$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
+		;EndIf
 	EndIf
 EndFunc
 

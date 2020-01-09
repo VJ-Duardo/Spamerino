@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 
+
 def return_json_obj():
     with open('saves/content.json', 'r', encoding='utf-8') as file:
         return json.loads(file.read())
@@ -12,13 +13,22 @@ def write_json_obj(json_obj):
         json.dump(json_obj, file, indent=4)
 
 
+def receive_data_array():
+    input_str = ""
+    for line in sys.stdin.buffer.readlines():
+        input_str += line.decode('utf-8')
+    data_arr = input_str.replace("/,", ",").split(" , ")
+    return data_arr
+
+
+
 def read():
     json_obj = return_json_obj()
     delimiter = " , "
     for i in range(0, len(json_obj['saves']), 1):
         list_elem = json_obj['saves'][i]
         for attr in list_elem:
-            if i == len(json_obj['saves'])-1 and attr == "after":
+            if i == len(json_obj['saves']) - 1 and attr == "after":
                 delimiter = ""
             sys.stdout.buffer.write((list_elem[attr].replace(",", "/,") + delimiter).encode('utf-8'))
 
@@ -56,13 +66,14 @@ def delete(name):
             return
 
 
-if sys.argv[1] == 'read':
-    read()
-elif sys.argv[1] == 'save':
-    save(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-elif sys.argv[1] == 'new':
-    new_save(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-elif sys.argv[1] == 'delete':
-    delete(sys.argv[2])
-else:
-    pass
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'read':
+        read()
+    elif sys.argv[1] == 'save':
+        save(*receive_data_array())
+    elif sys.argv[1] == 'new':
+        new_save(*receive_data_array())
+    elif sys.argv[1] == 'delete':
+        delete(sys.argv[2])
+    else:
+        pass
