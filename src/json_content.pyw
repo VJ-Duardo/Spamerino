@@ -70,6 +70,16 @@ def delete(name):
             return
 
 
+def rename(old_name, new_name):
+    json_obj = return_json_obj()
+    for i in range(0, len(json_obj['saves']), 1):
+        if json_obj['saves'][i]['name'] == old_name:
+            json_obj['saves'][i]['name'] = new_name
+            write_json_obj(json_obj)
+            print("Success", end="")
+            return
+
+
 if len(sys.argv) > 1:
     if sys.argv[1] == 'read':
         read()
@@ -79,5 +89,7 @@ if len(sys.argv) > 1:
         new_save(*receive_data())
     elif sys.argv[1] == 'delete':
         delete(receive_data(False))
+    elif sys.argv[1] == 'rename':
+        rename(*receive_data())
     else:
         pass

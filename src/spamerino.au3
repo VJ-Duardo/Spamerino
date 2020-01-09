@@ -25,7 +25,7 @@ HotKeySet("^n", "_New")
 HotKeySet("^!p", "_SetPlaySettings")
 
 GUISetBkColor(0x000000)
-$hAutoSpamForm = GUICreate($sTitle, 978, 672, 259, 194)
+$hAutoSpamForm = GUICreate($sTitle, 978, 688, 259, 194)
 ;Menu bar
 $hMenuFile = GUICtrlCreateMenu("File")
 $hMenuFileItemNew = GUICtrlCreateMenuItem("&New"&@TAB&"Ctrl+N", $hMenuFile)
@@ -43,44 +43,45 @@ $hMenuControlsNext = GUICtrlCreateMenuItem("Next"&@TAB&"Ctrl+Alt+→", $hMenuCon
 GUICtrlSetState($hMenuControlsNext, $GUI_DISABLE)
 
 ;Edit group
-$hGroupEdit = GUICtrlCreateGroup("Edit", 24, 16, 929, 385)
+$hGroupEdit = GUICtrlCreateGroup("Edit", 24, 16, 929, 401)
 $hList = GUICtrlCreateList("", 744, 40, 193, 201, BitOR($GUI_SS_DEFAULT_LIST,$LBS_DISABLENOSCROLL))
-$hButtonDelete  = GUICtrlCreateButton("Delete", 864, 248, 75, 25)
-$hTextarea = GUICtrlCreateEdit("", 40, 40, 681, 345, BitOR($ES_WANTRETURN,$WS_VSCROLL))
+$hButtonDelete  = GUICtrlCreateButton("Delete", 856, 248, 75, 25)
+$hButtonRename = GUICtrlCreateButton("Rename", 752, 248, 75, 25)
+$hTextarea = GUICtrlCreateEdit("", 40, 40, 681, 361, BitOR($ES_WANTRETURN,$WS_VSCROLL))
 _GUICtrlEdit_SetLimitText($hTextarea, 1000000)
-$hLabelBefore = GUICtrlCreateLabel("Before each line:", 744, 272, 84, 17)
-$hInputBefore = GUICtrlCreateInput("", 744, 296, 193, 21)
-$hLabelAfter = GUICtrlCreateLabel("After each line:", 744, 336, 75, 17)
-$hInputAfter = GUICtrlCreateInput("", 744, 360, 193, 21)
+$hLabelBefore = GUICtrlCreateLabel("Before each line:", 744, 288, 84, 17)
+$hInputBefore = GUICtrlCreateInput("", 744, 312, 193, 21)
+$hLabelAfter = GUICtrlCreateLabel("After each line:", 744, 352, 75, 17)
+$hInputAfter = GUICtrlCreateInput("", 744, 376, 193, 21)
 
 ;Status group
-$hGroupStatus = GUICtrlCreateGroup("Status", 24, 416, 929, 121)
-$hLabelCurrLine = GUICtrlCreateLabel("Current line: ", 40, 480, 80, 20)
+$hGroupStatus = GUICtrlCreateGroup("Status", 24, 432, 929, 121)
+$hLabelCurrLine = GUICtrlCreateLabel("Current line: ", 40, 496, 80, 20)
 GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-$hLabelNextLine = GUICtrlCreateLabel("Next line: ", 40, 504, 65, 20)
+$hLabelNextLine = GUICtrlCreateLabel("Next line: ", 40, 520, 65, 20)
 GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-$hLabelNextLineText = GUICtrlCreateLabel("-", 128, 504, 808, 20)
+$hLabelNextLineText = GUICtrlCreateLabel("-", 128, 520, 808, 20)
 GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-$hLabelCurrLineText = GUICtrlCreateLabel("-", 128, 480, 808, 20)
+$hLabelCurrLineText = GUICtrlCreateLabel("-", 128, 496, 808, 20)
 GUICtrlSetFont(-1, 10, 400, 0, "MS Sans Serif")
-$hLabelLiveDot = GUICtrlCreateLabel("•", 56, 432, 13, 36)
+$hLabelLiveDot = GUICtrlCreateLabel("•", 56, 448, 13, 36)
 GUICtrlSetFont(-1, 20, 400, 0, "Arial")
 GUICtrlSetColor(-1, 0x000000)
-$hLabelState = GUICtrlCreateLabel("State: Off.", 81, 441, 230, 24)
+$hLabelState = GUICtrlCreateLabel("State: Off.", 81, 457, 230, 24)
 GUICtrlSetFont(-1, 12, 400, 0, "MS Sans Serif")
 
 ;Control group
-$hGroupControls = GUICtrlCreateGroup("Controls", 24, 552, 929, 81)
-$hButtonPlay = GUICtrlCreateButton("►", 40, 584, 75, 25)
+$hGroupControls = GUICtrlCreateGroup("Controls", 24, 568, 929, 81)
+$hButtonPlay = GUICtrlCreateButton("►", 40, 600, 75, 25)
 GUICtrlSetFont(-1, 11)
-$hButtonPause = GUICtrlCreateButton("▌ ▌", 144, 584, 75, 25)
+$hButtonPause = GUICtrlCreateButton("▌ ▌", 144, 600, 75, 25)
 GUICtrlSetState($hButtonPause, $GUI_DISABLE)
-$hButtonCancel = GUICtrlCreateButton("█", 248, 584, 75, 25)
+$hButtonCancel = GUICtrlCreateButton("█", 248, 600, 75, 25)
 GUICtrlSetState($hButtonCancel, $GUI_DISABLE)
-$hButtonPrevious = GUICtrlCreateButton("←", 352, 584, 75, 25)
+$hButtonPrevious = GUICtrlCreateButton("←", 352, 600, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonPrevious, $GUI_DISABLE)
-$hButtonNext = GUICtrlCreateButton("→", 456, 584, 75, 25)
+$hButtonNext = GUICtrlCreateButton("→", 456, 600, 75, 25)
 GUICtrlSetFont(-1, 13)
 GUICtrlSetState($hButtonNext, $GUI_DISABLE)
 GUISetState(@SW_SHOW)
@@ -191,6 +192,31 @@ Func _SuspendRun()
 EndFunc
 
 
+Func _InputNewName($sDefault)
+	$bNameCorrect = False
+	$sNewEntryName = ""
+	$sPrompt = "Enter a name:"
+	While Not $bNameCorrect
+		$sNewEntryName = InputBox("Name", $sPrompt, $sDefault, "", 250, 150)
+		If @error == 1 Then
+			Return ""
+		EndIf
+
+		If StringStripWS($sNewEntryName,$STR_STRIPALL) == "" or $hCSObjDic.Exists(StringStripWS($sNewEntryName,$STR_STRIPLEADING + $STR_STRIPTRAILING)) Then
+			If StringStripWS($sNewEntryName,$STR_STRIPALL) == "" Then
+				$sPrompt = "The name cant be empty." & @CRLF & "Enter a name:"
+			Else
+				$sPrompt = "This name already exists." & @CRLF & "Enter a name:"
+			EndIf
+			$sDefault = $sNewEntryName
+		Else
+			$bNameCorrect = True
+			Return $sNewEntryName
+		EndIf
+	WEnd
+EndFunc
+
+
 Func _Save()
 	If WinGetTitle("[ACTIVE]") <> $sTitle Then
 		ControlSend("", "", "", "^s")
@@ -198,24 +224,10 @@ Func _Save()
 	EndIf
 
 	If GUICtrlRead($hList) == "" Then
-		$bNameCorrect = False
-		$sPrompt = "Enter a name:"
-		While Not $bNameCorrect
-			Local $sNewEntryName = InputBox("Name", $sPrompt, "", "", 250, 150)
-			If @error == 1 Then
-				Return
-			EndIf
-
-			If $sNewEntryName == "" or $hCSObjDic.Exists($sNewEntryName) Then
-				If $sNewEntryName == "" Then
-					$sPrompt = "The name cant be empty." & @CRLF & "Enter a name:"
-				Else
-					$sPrompt = "This name already exists." & @CRLF & "Enter a name:"
-				EndIf
-			Else
-				$bNameCorrect = True
-			EndIf
-		WEnd
+		$sNewEntryName = _InputNewName("")
+		If $sNewEntryName == "" Then
+			Return
+		EndIf
 
 		$hNewCSObj = ContentSave($sNewEntryName, GUICtrlRead($hTextarea), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
 		If _SendDataToJson($hNewCSObj, "utils/json_content.exe new") Then
@@ -259,6 +271,26 @@ Func _Delete()
 		GUICtrlSetData($hTextarea, "")
 		GUICtrlSetData($hInputBefore, "")
 		GUICtrlSetData($hInputAfter, "")
+	EndIf
+EndFunc
+
+
+Func _Rename()
+	If GUICtrlRead($hList) == "" Then
+		Return
+	EndIf
+
+	$sNewName = _InputNewName(GUICtrlRead($hList))
+	If $sNewName == "" Then
+		Return
+	EndIf
+
+	Local $aNames[2] = [GUICtrlRead($hList), $sNewName]
+	If _SendDataToJson($aNames, "utils/json_content.exe rename") Then
+		$hCSObjDic.Key(GUICtrlRead($hList)) = $sNewName
+		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
+		GUICtrlSetData ($hList, $sNewName)
+		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SelectString", $sNewName)
 	EndIf
 EndFunc
 
@@ -378,5 +410,7 @@ While 1
 			_Save()
 		Case $hButtonDelete
 			_Delete()
+		Case $hButtonRename
+			_Rename()
 	EndSwitch
 WEnd
