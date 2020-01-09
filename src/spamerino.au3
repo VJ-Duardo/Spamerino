@@ -1,14 +1,11 @@
-#include <FileConstants.au3>
-#include <File.au3>
-#include <WinAPIFiles.au3>
-#include <WinAPIShPath.au3>
-#include <Misc.au3>
-
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
 #include <GUIConstantsEx.au3>
-#include <GUIListBox.au3>
+#include <AutoItConstants.au3>
 #include <WindowsConstants.au3>
+
+#include <GUIListBox.au3>
+#include <GuiEdit.au3>
 
 #include "content_obj.au3"
 
@@ -50,6 +47,7 @@ $hGroupEdit = GUICtrlCreateGroup("Edit", 24, 16, 929, 385)
 $hList = GUICtrlCreateList("", 744, 40, 193, 201, BitOR($GUI_SS_DEFAULT_LIST,$LBS_DISABLENOSCROLL))
 $hButtonDelete  = GUICtrlCreateButton("Delete", 864, 248, 75, 25)
 $hTextarea = GUICtrlCreateEdit("", 40, 40, 681, 345, BitOR($ES_WANTRETURN,$WS_VSCROLL))
+_GUICtrlEdit_SetLimitText($hTextarea, 1000000)
 $hLabelBefore = GUICtrlCreateLabel("Before each line:", 744, 272, 84, 17)
 $hInputBefore = GUICtrlCreateInput("", 744, 296, 193, 21)
 $hLabelAfter = GUICtrlCreateLabel("After each line:", 744, 336, 75, 17)
@@ -218,9 +216,9 @@ Func _Save()
 				$bNameCorrect = True
 			EndIf
 		WEnd
+
 		$hNewCSObj = ContentSave($sNewEntryName, GUICtrlRead($hTextarea), GUICtrlRead($hInputBefore), GUICtrlRead($hInputAfter))
-		$sRun = 'utils/json_content.exe new "' & _GetName($hNewCSObj) & '" "' & _GetContent($hNewCSObj) & '" "' & _GetBefore($hNewCSObj) & '" "' & _GetAfter($hNewCSObj) & '"'
-		If _CallJson($sRun) Then
+		If _SendDataToJson($hNewCSObj, "utils/json_content.exe new") Then
 			$hCSObjDic.Add($sNewEntryName, $hNewCSObj)
 			GUICtrlSetData($hList, $sNewEntryName)
 			ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SelectString", $sNewEntryName)
@@ -230,18 +228,9 @@ Func _Save()
 		_SetContent($hCSObj, GUICtrlRead($hTextarea))
 		_SetBefore($hCSObj, GUICtrlRead($hInputBefore))
 		_SetAfter($hCSObj, GUICtrlRead($hInputAfter))
-		$iPid = Run("utils/json_content.exe save", "", @SW_HIDE, 3)
-		StdinWrite($iPid, StringToBinary(_GetName($hCSObj), 4))
-		StdinWrite($iPid, StringToBinary(_GetContent($hCSObj), 4))
-		;StdinWrite($iPid, _GetBefore($hCSObj))
-		;StdinWrite($iPid, _GetAfter($hCSObj))
-		;StdinWrite($iPid)
-		ProcessWaitClose($iStartPID)
-		ConsoleWrite(StdoutRead($iPid))
-		;$sRun = "utils/json_content.exe save"
-		;If _CallJson($sRun) Then
-		;	$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
-		;EndIf
+		If _SendDataToJson($hCSObj, "utils/json_content.exe save") Then
+			$hCSObjDic.Item(GUICtrlRead ($hList)) = $hCSObj
+		EndIf
 	EndIf
 EndFunc
 
@@ -263,19 +252,31 @@ Func _Delete()
 		Return
 	EndIf
 
-	$sRun = 'utils/json_content.exe delete "' & GUICtrlRead($hList) & '"'
-	If _CallJson($sRun) Then
+	Local $aDelName[1] = [GUICtrlRead($hList)]
+	If _SendDataToJson($aDelName, "utils/json_content.exe delete") Then
 		$hCSObjDic.Remove(GUICtrlRead($hList))
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
 		GUICtrlSetData($hTextarea, "")
+		GUICtrlSetData($hInputBefore, "")
+		GUICtrlSetData($hInputAfter, "")
 	EndIf
 EndFunc
 
 
-Func _CallJson($sRunString)
-	$iPID = Run($sRunString, "", @SW_HIDE, 2)
-	ProcessWaitClose($iPID)
-	If StdoutRead($iPID) == "Success" Then
+Func _SendDataToJson($aDataArgs, $sProgPath)
+	$sDataStr = ""
+	For $i = 0 To UBound($aDataArgs)-1 Step 1
+		If $i == UBound($aDataArgs)-1 Then
+			$sDataStr = $sDataStr & StringReplace($aDataArgs[$i], ",", "/,")
+		Else
+			$sDataStr = $sDataStr & StringReplace($aDataArgs[$i], ",", "/,") & " , "
+		EndIf
+	Next
+	$iPid = Run($sProgPath, "", @SW_HIDE, $STDIN_CHILD + $STDOUT_CHILD)
+	StdinWrite($iPid, StringToBinary($sDataStr, 4))
+	StdinWrite($iPid)
+	ProcessWaitClose($iPid)
+	If StdoutRead($iPid) == "Success" Then
 		Return True
 	EndIf
 EndFunc

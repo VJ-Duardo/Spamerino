@@ -13,12 +13,16 @@ def write_json_obj(json_obj):
         json.dump(json_obj, file, indent=4)
 
 
-def receive_data_array():
+def receive_data(return_array=True):
     input_str = ""
     for line in sys.stdin.buffer.readlines():
         input_str += line.decode('utf-8')
-    data_arr = input_str.replace("/,", ",").split(" , ")
-    return data_arr
+    if return_array:
+        data_arr = input_str.split(" , ")
+        data_arr = [arg.replace("/,", ",") for arg in data_arr]
+        return data_arr
+    else:
+        return input_str
 
 
 
@@ -70,10 +74,10 @@ if len(sys.argv) > 1:
     if sys.argv[1] == 'read':
         read()
     elif sys.argv[1] == 'save':
-        save(*receive_data_array())
+        save(*receive_data())
     elif sys.argv[1] == 'new':
-        new_save(*receive_data_array())
+        new_save(*receive_data())
     elif sys.argv[1] == 'delete':
-        delete(sys.argv[2])
+        delete(receive_data(False))
     else:
         pass
