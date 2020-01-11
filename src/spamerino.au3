@@ -288,6 +288,9 @@ Func _Rename()
 	Local $aNames[2] = [GUICtrlRead($hList), $sNewName]
 	If _SendDataToJson($aNames, "utils/json_content.exe rename") Then
 		$hCSObjDic.Key(GUICtrlRead($hList)) = $sNewName
+		$hRenamedObj = $hCSObjDic.Item($sNewName)
+		_SetName($hRenamedObj, $sNewName)
+		$hCSObjDic.Item($sNewName) = $hRenamedObj
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
 		GUICtrlSetData ($hList, $sNewName)
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SelectString", $sNewName)
