@@ -16,11 +16,12 @@ Global $hCSObjDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
 Global $bRunning = False
 Global $bDontRefresh = False
+Global $bPlayAccessable = True
 Global $aCurrentArray
 Global $iCurrentIndex = 0
 
 Global $nPlayDelay = 1500
-Global $nAutoPlayDelay = 100
+Global $nAutoPlayDelay = 0
 
 HotKeySet("^s", "_Save")
 HotKeySet("^n", "_New")
@@ -109,7 +110,8 @@ Func _Play()
 		ControlSend("", "", "", "{ENTER}")
 	EndIf
 	sleep($nAutoPlayDelay)
-	If $bRunning = True and $bPaused = False Then
+	If $bRunning and not $bPaused and $bPlayAccessable Then
+		$bPlayAccessable = False
 		$iCurrentIndex += 1
 
 		If $iCurrentIndex = 1 Then
@@ -127,6 +129,7 @@ Func _Play()
 		_SetLineStatus(True)
 		_SetSkipStatus(0)
 		ClipPut($sClipboardBackup)
+		$bPlayAccessable = True
 	EndIf
 EndFunc
 
@@ -182,6 +185,7 @@ Func _SuspendRun()
 	GUICtrlSetData($hLabelNextLineText, "-")
 	GUICtrlSetColor($hLabelLiveDot, 0x000000)
 	$bRunning = False
+	$bPlayAccessable = True
 	$iCurrentIndex = 0
 	$aCurrentArray = 0
 	GUICtrlSetState($hButtonPlay, $GUI_ENABLE)
