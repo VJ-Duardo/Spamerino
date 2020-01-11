@@ -6,6 +6,7 @@
 
 #include <GUIListBox.au3>
 #include <GuiEdit.au3>
+#include <Misc.au3>
 
 #include "content_obj.au3"
 
@@ -24,6 +25,9 @@ Global $nAutoPlayDelay = 100
 HotKeySet("^s", "_Save")
 HotKeySet("^n", "_New")
 HotKeySet("^!p", "_SetPlaySettings")
+
+_Singleton($sTitle)
+
 
 GUISetBkColor(0x000000)
 $hAutoSpamForm = GUICreate($sTitle, 978, 688, 259, 194)
