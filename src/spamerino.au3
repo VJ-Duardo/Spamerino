@@ -14,6 +14,7 @@ Global $sTitle = "Spamerino"
 Global $hCSObjDic = ObjCreate("Scripting.Dictionary")
 Global $bPaused = True
 Global $bRunning = False
+Global $bDontRefresh = False
 Global $aCurrentArray
 Global $iCurrentIndex = 0
 
@@ -254,9 +255,7 @@ Func _New()
 		ControlSend("", "", "", "^n")
 		Return
 	EndIf
-	GUICtrlSetData($hTextarea, "")
-	GUICtrlSetData($hInputBefore, "")
-	GUICtrlSetData($hInputAfter, "")
+	_SetInputFields("", "", "")
 	ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SetCurrentSelection", "-1")
 EndFunc
 
@@ -270,9 +269,7 @@ Func _Delete()
 	If _SendDataToJson($aDelName, "utils/json_content.exe delete") Then
 		$hCSObjDic.Remove(GUICtrlRead($hList))
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
-		GUICtrlSetData($hTextarea, "")
-		GUICtrlSetData($hInputBefore, "")
-		GUICtrlSetData($hInputAfter, "")
+		_SetInputFields("", "", "")
 	EndIf
 EndFunc
 
@@ -296,6 +293,7 @@ Func _Rename()
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "DelString", ControlCommand ($hAutoSpamForm, $sTitle, $hList, "FindString", GUICtrlRead($hList)))
 		GUICtrlSetData ($hList, $sNewName)
 		ControlCommand ($hAutoSpamForm, $sTitle, $hList, "SelectString", $sNewName)
+		$bDontRefresh = True
 	EndIf
 EndFunc
 
@@ -328,6 +326,13 @@ Func _LoadList($aJsonData)
 		$hCSObjDic.Add($aJsonData[$i], $hNewContentSaveObj)
 		GUICtrlSetData($hList, $aJsonData[$i])
 	Next
+EndFunc
+
+
+Func _SetInputFields($sTextAreaVal, $sBeforeVal, $sAfterVal)
+	GUICtrlSetData($hTextarea, $sTextAreaVal)
+	GUICtrlSetData($hInputBefore, $sBeforeVal)
+	GUICtrlSetData($hInputAfter, $sAfterVal)
 EndFunc
 
 
@@ -383,12 +388,11 @@ While 1
 		Case $GUI_EVENT_CLOSE
 			Exit
 		Case $hList
-			If GUICtrlRead ($hList) <> "" Then
+			If GUICtrlRead ($hList) <> "" and not $bDontRefresh Then
 				$hCSObj = $hCSObjDic.Item(GUICtrlRead ($hList))
-				GUICtrlSetData($hTextarea, _GetContent($hCSObj))
-				GUICtrlSetData($hInputBefore, _GetBefore($hCSObj))
-				GUICtrlSetData($hInputAfter, _GetAfter($hCSObj))
+				_SetInputFields(_GetContent($hCSObj), _GetBefore($hCSObj), _GetAfter($hCSObj))
 			EndIf
+			$bDontRefresh = False
 		Case $hButtonPlay
 			_SetPlaySettings()
 		Case $hMenuControlsPlay
