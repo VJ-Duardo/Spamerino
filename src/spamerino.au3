@@ -116,10 +116,12 @@ Func _Play()
 			Return
 		EndIf
 
+		$sClipboardBackup = ClipGet()
 		ClipPut(GUICtrlRead($hInputBefore) & $aCurrentArray[$iCurrentIndex] & GUICtrlRead($hInputAfter))
 		Send ("^v")
 		_SetLineStatus(True)
 		_SetSkipStatus(0)
+		ClipPut($sClipboardBackup)
 	EndIf
 EndFunc
 
