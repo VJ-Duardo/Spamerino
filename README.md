@@ -1,4 +1,8 @@
 # Spamerino
+
+[![GitHub Downloads](https://img.shields.io/github/downloads/VJ-Duardo/Spamerino/total)](https://github.com/VJ-Duardo/Spamerino/releases)
+
+
 __Spamerino__ allows you to spam anything "automaticially". 
 
 Currently the program is in a early stage with lots to do and many bugs.
